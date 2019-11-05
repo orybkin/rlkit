@@ -96,7 +96,7 @@ if __name__ == "__main__":
         ),
         train_vae_variant=dict(
             representation_size=16,
-            beta=5,
+            beta=1,
             num_epochs=0,
             dump_skew_debug_plots=True,
             decoder_activation='gaussian',
@@ -118,7 +118,7 @@ if __name__ == "__main__":
                 start_skew_epoch=12000,
                 is_auto_encoder=False,
                 batch_size=64,
-                lr=1e-3,
+                lr=2e-4,
                 skew_config=dict(
                     method='vae_prob',
                     power=0,

@@ -203,6 +203,11 @@ class ConvVAE(GaussianLatentVAE):
 
         self.epoch = 0
         self.decoder_distribution = decoder_distribution
+        
+        beta = 1
+        learn_beta = True
+        self.log_sigma = torch.nn.Parameter(torch.full((1,), np.log(beta))[0])
+        self.log_sigma.requires_grad_(learn_beta)
 
     def encode(self, input):
         h = self.encoder(input)
@@ -238,9 +243,16 @@ class ConvVAE(GaussianLatentVAE):
         if self.decoder_distribution == 'gaussian_identity_variance':
             inputs = inputs.narrow(start=0, length=self.imlength,
                                    dim=1).contiguous().view(-1, self.imlength)
-            log_prob = -1 * F.mse_loss(inputs, obs_distribution_params[0],
-                                       reduction='elementwise_mean')
+            
+            log_prob = -torch.sum(
+                gaussian_nll(inputs, self.log_sigma, obs_distribution_params[0]), -1
+            ).mean()
             return log_prob
         else:
             raise NotImplementedError('Distribution {} not supported'.format(
                 self.decoder_distribution))
+        
+
+def gaussian_nll(mu, log_sigma, x):
+    # Negative log likelihood (probability)
+    return 0.5 * torch.pow((x - mu) / log_sigma.exp(), 2) + log_sigma + 0.5 * np.log(2 * np.pi)
