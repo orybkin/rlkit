@@ -72,6 +72,7 @@ def train_vae_and_update_variant(variant):
             skewfit_variant['vae_train_data'] = vae_train_data
             skewfit_variant['vae_test_data'] = vae_test_data
         logger.save_extra_data(vae, 'vae.pkl', mode='pickle')
+        np.save(logger._snapshot_dir + '/vae_dataset.npz', vae_train_data)
         logger.remove_tabular_output(
             'vae_progress.csv',
             relative_to_snapshot_dir=True,
@@ -149,6 +150,7 @@ def train_vae(variant, return_data=False):
             t.dump_samples(epoch)
         t.update_train_weights()
     logger.save_extra_data(m, 'vae.pkl', mode='pickle')
+    np.save(logger._snapshot_dir + '/vae_dataset.npz', train_data)
     if return_data:
         return m, train_data, test_data
     return m

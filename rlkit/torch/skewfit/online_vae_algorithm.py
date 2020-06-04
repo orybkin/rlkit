@@ -11,6 +11,7 @@ from rlkit.torch.torch_rl_algorithm import (
 import rlkit.torch.pytorch_util as ptu
 from torch.multiprocessing import Process, Pipe
 from threading import Thread
+import numpy as np
 
 
 class OnlineVaeAlgorithm(TorchBatchRLAlgorithm):
@@ -52,6 +53,9 @@ class OnlineVaeAlgorithm(TorchBatchRLAlgorithm):
     def _end_epoch(self, epoch):
         self._train_vae(epoch)
         gt.stamp('vae training')
+        np.save(logger._snapshot_dir + '/vae_dataset', self.vae_trainer.train_dataset)
+        image_data = self.replay_buffer._next_obs['image_observation'][:self.replay_buffer._size]
+        np.save(logger._snapshot_dir + '/replay_buffer', image_data)
         super()._end_epoch(epoch)
 
     def _log_stats(self, epoch):

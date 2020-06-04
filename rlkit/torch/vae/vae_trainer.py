@@ -63,14 +63,15 @@ def compute_log_p_log_q_log_d(
         if decoder_distribution == 'bernoulli':
             decoded = model.decode(latents)[0]
             log_d_x_given_z = torch.log(imgs * decoded + (1 - imgs) * (1 - decoded) + 1e-8).sum(dim=1)
-        elif decoder_distribution == 'gaussian_identity_variance':
+        else:
+            # gaussian_identity_variance
             _, obs_distribution_params = model.decode(latents)
             dec_mu, dec_logvar = obs_distribution_params
             dec_var = dec_logvar.exp()
             decoder_dist = Normal(dec_mu, dec_var.pow(.5))
             log_d_x_given_z = decoder_dist.log_prob(imgs).sum(dim=1)
-        else:
-            raise EnvironmentError('Invalid Decoder Distribution Provided')
+        # else:
+        #     raise EnvironmentError('Invalid Decoder Distribution Provided')
 
         log_p[:, i] = log_p_z
         log_q[:, i] = log_q_z_given_x
@@ -368,6 +369,9 @@ class ConvVAETrainer(object):
         self.eval_statistics['train/log prob'] = np.mean(log_probs)
         self.eval_statistics['train/KL'] = np.mean(kles)
         self.eval_statistics['train/loss'] = np.mean(losses)
+        
+        if self.model.decoder_distribution == 'sigma_vae':
+            print(self.model.log_sigma, 'log_sigma')
 
     def get_diagnostics(self):
         return self.eval_statistics
@@ -431,6 +435,7 @@ class ConvVAETrainer(object):
             logger.dump_tabular()
             if save_vae:
                 logger.save_itr_params(epoch, self.model)
+                np.save(logger._snapshot_dir + '/vae_dataset', self.train_dataset)
 
     def debug_statistics(self):
         """

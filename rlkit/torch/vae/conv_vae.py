@@ -7,6 +7,7 @@ from rlkit.torch import pytorch_util as ptu
 import numpy as np
 from rlkit.torch.conv_networks import CNN, DCNN
 from rlkit.torch.vae.vae_base import GaussianLatentVAE
+import math
 
 ###### DEFAULT ARCHITECTURES #########
 
@@ -105,20 +106,20 @@ imsize84_default_architecture = dict(
 
 class ConvVAE(GaussianLatentVAE):
     def __init__(
-            self,
-            representation_size,
-            architecture,
-
-            encoder_class=CNN,
-            decoder_class=DCNN,
-            decoder_output_activation=identity,
-            decoder_distribution='bernoulli',
-
-            input_channels=1,
-            imsize=48,
-            init_w=1e-3,
-            min_variance=1e-3,
-            hidden_init=ptu.fanin_init,
+          self,
+          representation_size,
+          architecture,
+          
+          encoder_class=CNN,
+          decoder_class=DCNN,
+          decoder_output_activation=identity,
+          decoder_distribution='bernoulli',
+          
+          input_channels=1,
+          imsize=48,
+          init_w=1e-3,
+          min_variance=1e-3,
+          hidden_init=ptu.fanin_init,
     ):
         """
 
@@ -164,14 +165,14 @@ class ConvVAE(GaussianLatentVAE):
         self.input_channels = input_channels
         self.imsize = imsize
         self.imlength = self.imsize * self.imsize * self.input_channels
-
+        
         conv_args, conv_kwargs, deconv_args, deconv_kwargs = \
             architecture['conv_args'], architecture['conv_kwargs'], \
             architecture['deconv_args'], architecture['deconv_kwargs']
         conv_output_size = deconv_args['deconv_input_width'] * \
                            deconv_args['deconv_input_height'] * \
                            deconv_args['deconv_input_channels']
-
+        
         self.encoder = encoder_class(
             **conv_args,
             paddings=np.zeros(len(conv_args['kernel_sizes']), dtype=np.int64),
@@ -182,16 +183,16 @@ class ConvVAE(GaussianLatentVAE):
             init_w=init_w,
             hidden_init=hidden_init,
             **conv_kwargs)
-
+        
         self.fc1 = nn.Linear(self.encoder.output_size, representation_size)
         self.fc2 = nn.Linear(self.encoder.output_size, representation_size)
-
+        
         self.fc1.weight.data.uniform_(-init_w, init_w)
         self.fc1.bias.data.uniform_(-init_w, init_w)
-
+        
         self.fc2.weight.data.uniform_(-init_w, init_w)
         self.fc2.bias.data.uniform_(-init_w, init_w)
-
+        
         self.decoder = decoder_class(
             **deconv_args,
             fc_input_size=representation_size,
@@ -200,15 +201,16 @@ class ConvVAE(GaussianLatentVAE):
             paddings=np.zeros(len(deconv_args['kernel_sizes']), dtype=np.int64),
             hidden_init=hidden_init,
             **deconv_kwargs)
-
+        
         self.epoch = 0
         self.decoder_distribution = decoder_distribution
         
-        beta = 1
-        learn_beta = True
-        self.log_sigma = torch.nn.Parameter(torch.full((1,), np.log(beta))[0])
-        self.log_sigma.requires_grad_(learn_beta)
-
+        if self.decoder_distribution == 'sigma_vae':
+            initial_sigma = 1
+            learn_beta = True
+            self.log_sigma = torch.nn.Parameter(torch.full((1,), np.log(initial_sigma))[0])
+            self.log_sigma.requires_grad_(learn_beta)
+    
     def encode(self, input):
         h = self.encoder(input)
         mu = self.fc1(h)
@@ -217,42 +219,53 @@ class ConvVAE(GaussianLatentVAE):
         else:
             logvar = self.log_min_variance + torch.abs(self.fc2(h))
         return (mu, logvar)
-
+    
     def decode(self, latents):
         decoded = self.decoder(latents).view(-1,
                                              self.imsize * self.imsize * self.input_channels)
         if self.decoder_distribution == 'bernoulli':
             return decoded, [decoded]
-        elif self.decoder_distribution == 'gaussian_identity_variance':
+        else:
+            # gaussian_identity_variance
             return torch.clamp(decoded, 0, 1), [torch.clamp(decoded, 0, 1),
                                                 torch.ones_like(decoded)]
-        else:
-            raise NotImplementedError('Distribution {} not supported'.format(
-                self.decoder_distribution))
-
+            # else:
+            #     raise NotImplementedError('Distribution {} not supported'.format(
+            #         self.decoder_distribution))
+    
     def logprob(self, inputs, obs_distribution_params):
+    
+        inputs = inputs.narrow(start=0, length=self.imlength,
+                               dim=1).contiguous().view(-1, self.imlength)
+    
         if self.decoder_distribution == 'bernoulli':
-            inputs = inputs.narrow(start=0, length=self.imlength,
-                                   dim=1).contiguous().view(-1, self.imlength)
             log_prob = - F.binary_cross_entropy(
-                obs_distribution_params[0],
-                inputs,
-                reduction='elementwise_mean'
-            ) * self.imlength
-            return log_prob
-        if self.decoder_distribution == 'gaussian_identity_variance':
-            inputs = inputs.narrow(start=0, length=self.imlength,
-                                   dim=1).contiguous().view(-1, self.imlength)
-            
-            log_prob = -torch.sum(
-                gaussian_nll(inputs, self.log_sigma, obs_distribution_params[0]), -1
-            ).mean()
-            return log_prob
+                obs_distribution_params[0], inputs, reduction='elementwise_mean') * self.imlength
+        elif self.decoder_distribution == 'gaussian_identity_variance':
+            log_sigma = (torch.ones(1).to(inputs.device) * math.sqrt(2)).log()
+            log_prob = -torch.sum(gaussian_nll(inputs, log_sigma, obs_distribution_params[0]), -1).mean()
+        elif self.decoder_distribution == 'sigma_vae':
+            log_prob = -torch.sum(gaussian_nll(inputs, self.log_sigma, obs_distribution_params[0]), -1).mean()
+        elif self.decoder_distribution == 'optimal_sigma_vae':
+            log_prob = -torch.sum(optimal_variance_nll(inputs, obs_distribution_params[0]), -1).mean()
         else:
             raise NotImplementedError('Distribution {} not supported'.format(
                 self.decoder_distribution))
         
+        return log_prob
+
+
+def optimal_variance_nll(mu, x):
+    ids = list(range(len(x.shape)))[1:]
+    sigma = ((x - mu) ** 2).mean(ids, keepdim=True).sqrt()
+    return gaussian_nll_s(mu, sigma, x)
+
 
 def gaussian_nll(mu, log_sigma, x):
     # Negative log likelihood (probability)
     return 0.5 * torch.pow((x - mu) / log_sigma.exp(), 2) + log_sigma + 0.5 * np.log(2 * np.pi)
+
+
+def gaussian_nll_s(mu, sigma, x):
+    # Negative log likelihood (probability)
+    return 0.5 * torch.pow((x - mu) / sigma, 2) + sigma.log() + 0.5 * np.log(2 * np.pi)
