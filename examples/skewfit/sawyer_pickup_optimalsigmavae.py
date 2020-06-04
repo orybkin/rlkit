@@ -26,7 +26,7 @@ if __name__ == "__main__":
             presample_goals=True,
             custom_goal_sampler='replay_buffer',
             online_vae_trainer_kwargs=dict(
-                beta=30,
+                beta=1,
                 lr=1e-3,
             ),
             generate_goal_dataset_fctn=get_image_presampled_goals_from_vae_env,
@@ -71,7 +71,7 @@ if __name__ == "__main__":
                 vae_priority_type='vae_prob',
                 priority_function_kwargs=dict(
                     sampling_method='importance_sampling',
-                    decoder_distribution='gaussian_identity_variance',
+                    decoder_distribution='optimal_sigma_vae',
                     num_latents_to_sample=10,
                 ),
                 power=-1,
@@ -96,14 +96,14 @@ if __name__ == "__main__":
         ),
         train_vae_variant=dict(
             representation_size=16,
-            beta=5,
+            beta=1,
             num_epochs=0,
             dump_skew_debug_plots=True,
             decoder_activation='gaussian',
             vae_kwargs=dict(
                 input_channels=3,
                 architecture=imsize48_default_architecture,
-                decoder_distribution='gaussian_identity_variance',
+                decoder_distribution='optimal_sigma_vae',
             ),
             generate_vae_data_fctn=generate_vae_dataset,
             generate_vae_dataset_kwargs=dict(
@@ -118,14 +118,14 @@ if __name__ == "__main__":
                 start_skew_epoch=12000,
                 is_auto_encoder=False,
                 batch_size=64,
-                lr=1e-3,
+                lr=2e-4,
                 skew_config=dict(
                     method='vae_prob',
                     power=0,
                 ),
                 skew_dataset=True,
                 priority_function_kwargs=dict(
-                    decoder_distribution='gaussian_identity_variance',
+                    decoder_distribution='optimal_sigma_vae',
                     sampling_method='true_prior_sampling',
                     num_latents_to_sample=10,
                 ),
@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
     # n_seeds = 3
     # mode = 'gcp'
-    exp_prefix = 'skew-fit-pickup'
+    exp_prefix = 'skew-fit-pickup-optimalsigmavae'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):
