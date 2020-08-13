@@ -11,8 +11,10 @@ from multiworld.envs.mujoco.cameras import (
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.launchers.skewfit_experiments import skewfit_full_experiment
 from rlkit.torch.vae.conv_vae import imsize48_default_architecture
+import rlkit.torch.pytorch_util as ptu
 
 if __name__ == "__main__":
+    ptu.set_gpu_mode(True)
     num_images = 1
     variant = dict(
         algorithm='Skew-Fit',

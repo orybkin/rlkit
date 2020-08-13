@@ -4,9 +4,10 @@ from rlkit.launchers.launcher_util import run_experiment
 import rlkit.torch.vae.vae_schedules as vae_schedules
 from rlkit.launchers.skewfit_experiments import skewfit_full_experiment
 from rlkit.torch.vae.conv_vae import imsize48_default_architecture
-
+import rlkit.torch.pytorch_util as ptu
 
 if __name__ == "__main__":
+    ptu.set_gpu_mode(True)
     variant = dict(
         algorithm='Skew-Fit',
         double_algo=False,

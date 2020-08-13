@@ -16,7 +16,8 @@ def simulate_policy(args):
         ptu.set_gpu_mode(True)
         policy.to(ptu.device)
     if isinstance(env, VAEWrappedEnv) and hasattr(env, 'mode'):
-        env.mode(args.mode)
+        # env.mode(args.mode)
+        env.goal_sampling_mode = args.mode
     if args.enable_render or hasattr(env, 'enable_render'):
         # some environments need to be reconfigured for visualization
         env.enable_render()
