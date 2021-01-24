@@ -108,7 +108,7 @@ def train_vae(variant, return_data=False):
     train_data, test_data, info = generate_vae_dataset_fctn(
         variant['generate_vae_dataset_kwargs']
     )
-    # logger.save_extra_data(info)
+    logger.save_extra_data(info)
     logger.get_snapshot_dir()
     if 'beta_schedule_kwargs' in variant:
         beta_schedule = PiecewiseLinearSchedule(

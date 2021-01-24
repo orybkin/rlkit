@@ -314,8 +314,6 @@ class Logger(object):
             elif self._snapshot_mode == 'last':
                 # override previous params
                 file_name = osp.join(self._snapshot_dir, 'params.pkl')
-                params.pop('exploration/env')
-                params.pop('evaluation/env')
                 torch.save(params, file_name)
             elif self._snapshot_mode == "gap":
                 if itr % self._snapshot_gap == 0:

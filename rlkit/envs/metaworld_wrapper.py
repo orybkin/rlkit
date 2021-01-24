@@ -66,9 +66,9 @@ class SFMultiTaskMetaWorld(MultiTaskMetaWorld):
       self._goal_set = False
       return self._skewfit_goal['image']
     
-    self._offscreen.render(width, width, -1)
-    image = np.flip(self._offscreen.read_pixels(width, width)[0], 1)
-    return image
+    # self._offscreen.render(width, width, -1)
+    # image = np.flip(self._offscreen.read_pixels(width, width)[0], 1)
+    return self._env.sim.render(self._width, self._width)
   
   def compute_rewards(self, _, __):
     return np.zeros((1))
