@@ -36,7 +36,7 @@ if __name__ == "__main__":
             vf_kwargs=dict(
                 hidden_sizes=[400, 300],
             ),
-            max_path_length=50,
+            max_path_length=150,
             algo_kwargs=dict(
                 batch_size=1024,
                 num_epochs=1000,

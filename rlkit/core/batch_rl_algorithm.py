@@ -55,11 +55,37 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 range(self._start_epoch, self.num_epochs),
                 save_itrs=True,
         ):
-            self.eval_data_collector.collect_new_paths(
+            
+            # env = self.eval_data_collector._env
+            # env.goal_sampling_mode = self.eval_data_collector._goal_sampling_mode
+            # o = env.reset()
+            # if (o['image'] == o['image_goal']).mean() == 1.0:
+            #     import pdb; pdb.set_trace()
+            
+            eval_paths = self.eval_data_collector.collect_new_paths(
                 self.max_path_length,
                 self.num_eval_steps_per_epoch,
                 discard_incomplete_paths=True,
             )
+            from rlkit.core import logger
+            import numpy as np
+            import pathlib
+            if epoch % 50 == 0:
+                npy_path = pathlib.Path(logger._snapshot_dir) / ('eval_episodes_' + str(epoch) + '.npy')
+                np.save(npy_path, eval_paths)
+                import imageio
+                videos = []
+                for i in range(len(eval_paths)):
+                    episode = eval_paths[i]['observations']
+                    execution = np.stack([s['image'] for s in episode])
+                    goal = episode[0]['image_goal']
+                    video = np.concatenate((goal[None].repeat(execution.shape[0], 0), execution), 1)
+                    videos.append(video)
+
+                gif_path = pathlib.Path(logger._snapshot_dir) / ('eval_traj_' + str(epoch) + '.gif')
+                imageio.mimwrite(gif_path, np.concatenate(videos, 2))
+            
+            # import pdb; pdb.set_trace()
             gt.stamp('evaluation sampling')
 
             for _ in range(self.num_train_loops_per_epoch):
