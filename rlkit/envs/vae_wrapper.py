@@ -87,11 +87,13 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
         self._custom_goal_sampler = None
         self._goal_sampling_mode = goal_sampling_mode
 
-
     def reset(self):
         obs = self.wrapped_env.reset()
+        # if (obs['image'] == obs['image_goal']).mean() == 1.0:
         goal = self.sample_goal()
         self.set_goal(goal)
+        # The problem is the goal obs overrides the image and state parameters!
+        # The goal obs is set through self.sample_goal
         self._initial_obs = obs
         return self._update_obs(obs)
 
@@ -113,7 +115,9 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
         obs['latent_achieved_goal'] = latent_obs
         obs['observation'] = latent_obs
         obs['achieved_goal'] = latent_obs
-        obs = {**obs, **self.desired_goal}
+        rm_keys = ['image', 'state']
+        desired_goal = {k: v for (k,v) in self.desired_goal.items() if k not in rm_keys}
+        obs = {**obs, **desired_goal}
         return obs
 
     def _update_info(self, info, obs):
