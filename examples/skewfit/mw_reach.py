@@ -18,8 +18,10 @@ if __name__ == "__main__":
         # init_camera=sawyer_init_camera_zoomed_in,
         # env_id='SawyerPushNIPSEasy-v0',
         env_class = SFMultiTaskMetaWorld,
-        env_kwargs = dict(wrapped_env='sawyer_SawyerReachEnvV2_gmed', imsize=48),
+        env_kwargs = dict(wrapped_env='sawyer_SawyerReachEnv', imsize=48),
+        env_collect_episodes = True,
         skewfit_variant=dict(
+            env_collect_episodes=True,
             save_video=True,
             custom_goal_sampler='replay_buffer',
             online_vae_trainer_kwargs=dict(

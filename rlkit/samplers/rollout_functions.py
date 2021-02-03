@@ -98,8 +98,8 @@ def rollout(
     path_length = 0
     agent.reset()
     o = env.reset()
-    if (o['image'] == o['image_goal']).mean() == 1.0:
-        import pdb; pdb.set_trace()
+    # if (o['image'] == o['image_goal']).mean() == 1.0:
+    #     import pdb; pdb.set_trace()
     if reset_callback:
         reset_callback(env, agent, o)
     if render:

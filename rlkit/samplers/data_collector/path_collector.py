@@ -49,9 +49,9 @@ class MdpPathCollector(PathCollector):
             )
 
             o = self._env.reset()
-            if (o['image'] == o['image_goal']).mean() == 1.0:
-                import pdb;
-                pdb.set_trace()
+            # if (o['image'] == o['image_goal']).mean() == 1.0:
+            #     import pdb;
+            #     pdb.set_trace()
             path = self._rollout_fn(
                 self._env,
                 self._policy,

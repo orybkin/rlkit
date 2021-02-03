@@ -90,6 +90,9 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
     def reset(self):
         obs = self.wrapped_env.reset()
         # if (obs['image'] == obs['image_goal']).mean() == 1.0:
+
+        # if (obs['image'] == obs['image_goal']).mean() == 1.0:
+        #     import pdb;pdb.set_trace()
         goal = self.sample_goal()
         self.set_goal(goal)
         # The problem is the goal obs overrides the image and state parameters!
@@ -213,8 +216,8 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
             achieved_goals = obs['latent_achieved_goal']
             desired_goals = obs['latent_desired_goal']
             dist = np.linalg.norm(desired_goals - achieved_goals, ord=self.norm_order, axis=1)
-            reward = 0 if dist < self.epsilon else -1
-            return reward
+            reward = (dist < self.epsilon).astype(float) - 1
+            return np.asarray(reward).reshape([-1])
         elif self.reward_type == 'state_distance':
             achieved_goals = obs['state_achieved_goal']
             desired_goals = obs['state_desired_goal']

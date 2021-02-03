@@ -108,7 +108,7 @@ def train_vae(variant, return_data=False):
     train_data, test_data, info = generate_vae_dataset_fctn(
         variant['generate_vae_dataset_kwargs']
     )
-    logger.save_extra_data(info)
+    # logger.save_extra_data(info)
     logger.get_snapshot_dir()
     if 'beta_schedule_kwargs' in variant:
         beta_schedule = PiecewiseLinearSchedule(
@@ -297,7 +297,7 @@ def generate_vae_dataset(variant):
     return train_dataset, test_dataset, info
 
 
-def get_envs(variant):
+def get_envs(variant, test=False):
     from multiworld.core.image_env import ImageEnv
     from rlkit.envs.vae_wrapper import VAEWrappedEnv
     from rlkit.util.io import load_local_or_remote_file
@@ -321,6 +321,16 @@ def get_envs(variant):
         env = gym.make(variant['env_id'])
     else:
         env = variant["env_class"](**variant['env_kwargs'])
+        if variant.get("env_collect_episodes", False):
+            from rlkit.envs.metaworld_wrapper import CollectDataset, TimeLimit, save_episodes
+            import pathlib
+            if test:
+                logdir = pathlib.Path(logger._snapshot_dir) / 'eval_eps'
+            else:
+                logdir = pathlib.Path(logger._snapshot_dir) / 'train_eps'
+            callbacks = [lambda episode: save_episodes(logdir, [episode])]
+            env = TimeLimit(env, variant['max_path_length'])
+            env = CollectDataset(env, callbacks)
     if not do_state_exp:
         if isinstance(env, ImageEnv):
             image_env = env
@@ -453,6 +463,7 @@ def skewfit_experiment(variant):
 
     skewfit_preprocess_variant(variant)
     env = get_envs(variant)
+    test_env = get_envs(variant, test=True)
 
     uniform_dataset_fn = variant.get('generate_uniform_dataset_fn', None)
     if uniform_dataset_fn:
@@ -528,7 +539,7 @@ def skewfit_experiment(variant):
     trainer = HERTrainer(trainer)
     eval_path_collector = VAEWrappedEnvPathCollector(
         variant['evaluation_goal_sampling_mode'],
-        env,
+        test_env,
         MakeDeterministic(policy),
         max_path_length,
         observation_key=observation_key,

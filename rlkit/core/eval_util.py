@@ -43,21 +43,26 @@ def get_generic_path_information(paths, stat_prefix=''):
                 final_ks = np.array([info[k][-1] for info in all_env_infos])
                 first_ks = np.array([info[k][0] for info in all_env_infos])
                 all_ks = np.concatenate([info[k] for info in all_env_infos])
-                statistics.update(create_stats_ordered_dict(
-                    stat_prefix + k,
-                    final_ks,
-                    stat_prefix='{}/final/'.format(info_key),
-                ))
-                statistics.update(create_stats_ordered_dict(
-                    stat_prefix + k,
-                    first_ks,
-                    stat_prefix='{}/initial/'.format(info_key),
-                ))
-                statistics.update(create_stats_ordered_dict(
-                    stat_prefix + k,
-                    all_ks,
-                    stat_prefix='{}/'.format(info_key),
-                ))
+                if not (final_ks == None).any():
+                    statistics.update(create_stats_ordered_dict(
+                        stat_prefix + k,
+                        final_ks,
+                        stat_prefix='{}/final/'.format(info_key),
+                    ))
+
+                if not (first_ks == None).any():
+                    statistics.update(create_stats_ordered_dict(
+                        stat_prefix + k,
+                        first_ks,
+                        stat_prefix='{}/initial/'.format(info_key),
+                    ))
+
+                if not (all_ks == None).any():
+                    statistics.update(create_stats_ordered_dict(
+                        stat_prefix + k,
+                        all_ks,
+                        stat_prefix='{}/'.format(info_key),
+                    ))
 
     return statistics
 

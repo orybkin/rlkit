@@ -43,6 +43,10 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
 
     def _train(self):
         if self.min_num_steps_before_training > 0:
+            train_goal_sampling_mode = self.expl_data_collector._goal_sampling_mode
+            # Regardless of variant, the first exploration goals are collected with the prior
+            # This is needed for HER training, which uses replay buffer goals. The first batch is collected when the buffer is empty. VAE prior is the only goal sampling mode that works in the code so we have to use it.
+            self.expl_data_collector._goal_sampling_mode = 'vae_prior'
             init_expl_paths = self.expl_data_collector.collect_new_paths(
                 self.max_path_length,
                 self.min_num_steps_before_training,
@@ -50,6 +54,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
+            self.expl_data_collector._goal_sampling_mode = train_goal_sampling_mode
 
         for epoch in gt.timed_for(
                 range(self._start_epoch, self.num_epochs),

@@ -5,11 +5,12 @@ import rlkit.torch.vae.vae_schedules as vae_schedules
 from rlkit.launchers.skewfit_experiments import skewfit_full_experiment
 from rlkit.torch.vae.conv_vae import imsize48_default_architecture
 import rlkit.torch.pytorch_util as ptu
-from rlkit.envs.metaworld_wrapper import SFMultiTaskMetaWorld
+from rlkit.envs.metaworld_wrapper import SFMultiTaskMetaWorld, CollectDataset, save_episodes
 import multiworld.core.image_env
 
 if __name__ == "__main__":
     ptu.set_gpu_mode(True)
+    
     variant = dict(
         algorithm='Skew-Fit',
         double_algo=False,
@@ -18,8 +19,9 @@ if __name__ == "__main__":
         # init_camera=sawyer_init_camera_zoomed_in,
         # env_id='SawyerPushNIPSEasy-v0',
         env_class = SFMultiTaskMetaWorld,
-        env_kwargs = dict(wrapped_env='sawyer_SawyerBinPickingEnv_frontview2_boxed', imsize=48),
+        env_kwargs = dict(wrapped_env='sawyer_SawyerBinPickingEnv_frontview2_boxedfront', imsize=48),
         skewfit_variant=dict(
+            env_collect_episodes=True,
             save_video=True,
             custom_goal_sampler='replay_buffer',
             online_vae_trainer_kwargs=dict(
