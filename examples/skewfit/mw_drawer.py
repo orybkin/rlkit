@@ -5,22 +5,23 @@ import rlkit.torch.vae.vae_schedules as vae_schedules
 from rlkit.launchers.skewfit_experiments import skewfit_full_experiment
 from rlkit.torch.vae.conv_vae import imsize48_default_architecture
 import rlkit.torch.pytorch_util as ptu
-from rlkit.envs.metaworld_wrapper import SFMultiTaskMetaWorld
+from rlkit.envs.metaworld_wrapper import SFMultiTaskMetaWorld, CollectDataset, save_episodes
 import multiworld.core.image_env
 
 if __name__ == "__main__":
     ptu.set_gpu_mode(True)
+    
     variant = dict(
-        algorithm='RIG',
+        algorithm='Skew-Fit',
         double_algo=False,
         online_vae_exploration=False,
         imsize=48,
         # init_camera=sawyer_init_camera_zoomed_in,
         # env_id='SawyerPushNIPSEasy-v0',
         env_class = SFMultiTaskMetaWorld,
-        env_kwargs = dict(wrapped_env='sawyer_SawyerReachEnv', imsize=48),
-        env_collect_episodes = True,
+        env_kwargs = dict(wrapped_env='sawyer_SawyerTwoDrawersOpenEnv_sideviewdrawer_boxedside', imsize=48),
         skewfit_variant=dict(
+            env_collect_episodes=True,
             save_video=True,
             custom_goal_sampler='replay_buffer',
             online_vae_trainer_kwargs=dict(
@@ -58,7 +59,7 @@ if __name__ == "__main__":
                 use_automatic_entropy_tuning=True,
             ),
             replay_buffer_kwargs=dict(
-                start_skew_epoch=10000000,
+                start_skew_epoch=10,
                 max_size=int(100000),
                 fraction_goals_rollout_goals=0.2,
                 fraction_goals_env_goals=0.5,
@@ -69,7 +70,7 @@ if __name__ == "__main__":
                     decoder_distribution='gaussian_identity_variance',
                     num_latents_to_sample=10,
                 ),
-                power=0,
+                power=-1,
                 relabeling_goal_sampling_mode='vae_prior',
             ),
             exploration_goal_sampling_mode='vae_prior',
@@ -112,7 +113,7 @@ if __name__ == "__main__":
             ),
             # TODO: why the redundancy?
             algo_kwargs=dict(
-                start_skew_epoch=50000000,
+                start_skew_epoch=5000,
                 is_auto_encoder=False,
                 batch_size=64,
                 lr=1e-3,
@@ -120,7 +121,7 @@ if __name__ == "__main__":
                     method='vae_prob',
                     power=-1,
                 ),
-                skew_dataset=False,
+                skew_dataset=True,
                 priority_function_kwargs=dict(
                     decoder_distribution='gaussian_identity_variance',
                     sampling_method='importance_sampling',
@@ -145,7 +146,7 @@ if __name__ == "__main__":
 
     n_seeds = 3
     mode = 'ec2'
-    exp_prefix = 'rlkit-rig-mwreach'
+    exp_prefix = 'rlkit-skew-fit-mwdrawer'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):

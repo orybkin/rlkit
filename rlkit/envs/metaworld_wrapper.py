@@ -12,6 +12,7 @@ import pathlib
 from blox import rmap_list, rmap
 import datetime
 import uuid
+import random
 
 sys.path.append(str(pathlib.Path(__file__).parent.parent.parent.parent / 'dreamerv2' ))
 
@@ -62,6 +63,10 @@ class SFMultiTaskMetaWorld(MultiTaskMetaWorld):
   
   def get_goal(self):
     return {'image': self.render_goal()}
+  
+  def reset(self):
+    self.goal_idx = random.randint(1, len(self.goals)) - 1
+    return super().reset()
   
   def set_env_state(self, _):
     pass
