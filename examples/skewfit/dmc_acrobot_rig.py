@@ -18,7 +18,7 @@ if __name__ == "__main__":
         # init_camera=sawyer_init_camera_zoomed_in,
         # env_id='SawyerPushNIPSEasy-v0',
         env_class = SFMultiTaskDeepMindControl,
-        env_kwargs = dict(wrapped_env='cheetah_run', imsize=48),
+        env_kwargs = dict(wrapped_env='acrobot_swingup', imsize=48),
         env_collect_episodes = True,
         skewfit_variant=dict(
             env_collect_episodes=True,
@@ -146,7 +146,11 @@ if __name__ == "__main__":
 
     n_seeds = 3
     mode = 'ec2'
-    exp_prefix = 'rlkit-skew-fit-dmccheetah'
+    exp_prefix = 'rlkit-skew-fit-dmcacrobot_rig'
+    variant['skewfit_variant']['replay_buffer_kwargs']['power'] = 0
+    variant['skewfit_variant']['replay_buffer_kwargs']['start_skew_epoch'] = 100000
+    variant['train_vae_variant']['algo_kwargs']['skew_config']['power'] = 0
+    variant['train_vae_variant']['algo_kwargs']['start_skew_epoch'] = 50000000
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):

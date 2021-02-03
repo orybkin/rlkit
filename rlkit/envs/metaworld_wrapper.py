@@ -47,7 +47,7 @@ class SFMultiTaskDeepMindControl(MultiTaskDeepMindControl):
     self.recompute_reward = recompute_reward
     self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
     
-    super().__init__(wrapped_env, 1, (imsize, imsize))
+    super().__init__(wrapped_env, 2, (imsize, imsize))
     self._goal_set = False
 
   def set_to_goal(self, goal):
