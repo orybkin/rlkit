@@ -21,6 +21,7 @@ if __name__ == "__main__":
         env_kwargs = dict(wrapped_env='sawyer_SawyerReachEnv', imsize=48),
         env_collect_episodes = True,
         skewfit_variant=dict(
+            env_collect_episodes=True,
             save_video=True,
             custom_goal_sampler='replay_buffer',
             online_vae_trainer_kwargs=dict(
