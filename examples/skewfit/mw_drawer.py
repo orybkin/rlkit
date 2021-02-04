@@ -19,7 +19,7 @@ if __name__ == "__main__":
         # init_camera=sawyer_init_camera_zoomed_in,
         # env_id='SawyerPushNIPSEasy-v0',
         env_class = SFMultiTaskMetaWorld,
-        env_kwargs = dict(wrapped_env='sawyer_SawyerTwoDrawersOpenEnv_sideviewdrawer_boxedside', imsize=48),
+        env_kwargs = dict(wrapped_env='sawyer_SawyerTwoDrawersOpenEnv_topdown_boxedtop', imsize=48),
         skewfit_variant=dict(
             env_collect_episodes=True,
             save_video=True,

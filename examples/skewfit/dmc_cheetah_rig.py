@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     n_seeds = 3
     mode = 'ec2'
-    exp_prefix = 'rlkit-skew-fit-dmccheetah'
+    exp_prefix = 'rlkit-rig-dmccheetah'
     variant['skewfit_variant']['replay_buffer_kwargs']['power'] = 0
     variant['skewfit_variant']['replay_buffer_kwargs']['start_skew_epoch'] = 100000
     variant['train_vae_variant']['algo_kwargs']['skew_config']['power'] = 0
