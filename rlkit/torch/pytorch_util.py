@@ -222,7 +222,7 @@ def compute_deconv_layer_sizes(h_in, w_in, kernel_sizes, strides,
 GPU wrappers
 """
 
-_use_gpu = False
+_use_gpu = True
 device = None
 
 

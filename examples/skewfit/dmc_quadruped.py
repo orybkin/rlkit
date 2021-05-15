@@ -18,7 +18,7 @@ if __name__ == "__main__":
         # init_camera=sawyer_init_camera_zoomed_in,
         # env_id='SawyerPushNIPSEasy-v0',
         env_class = SFMultiTaskDeepMindControl,
-        env_kwargs = dict(wrapped_env='walker_stand', imsize=48),
+        env_kwargs = dict(wrapped_env='quadruped_walk', imsize=48),
         env_collect_episodes = True,
         skewfit_variant=dict(
             env_collect_episodes=True,
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     n_seeds = 3
     mode = 'ec2'
-    exp_prefix = 'rlkit-skew-fit-dmcwalker'
+    exp_prefix = 'rlkit-skew-fit-dmcquadruped'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):

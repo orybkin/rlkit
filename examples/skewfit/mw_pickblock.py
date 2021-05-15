@@ -19,7 +19,7 @@ if __name__ == "__main__":
         # init_camera=sawyer_init_camera_zoomed_in,
         # env_id='SawyerPushNIPSEasy-v0',
         env_class = SFMultiTaskMetaWorld,
-        env_kwargs = dict(wrapped_env='sawyer_SawyerBlockPickingEnv_frontview2_boxedfront', imsize=48),
+        env_kwargs = dict(wrapped_env='sawyer_SawyerTwoBlockBinEnv_frontview3_boxedfront', imsize=48),
         skewfit_variant=dict(
             env_collect_episodes=True,
             save_video=True,
@@ -41,15 +41,17 @@ if __name__ == "__main__":
             max_path_length=150,
             algo_kwargs=dict(
                 batch_size=1024,
-                num_epochs=4000,
-                num_eval_steps_per_epoch=500,
-                num_expl_steps_per_train_loop=500,
+                num_epochs=18000,
+                num_eval_steps_per_epoch=450,
+                num_expl_steps_per_train_loop=450,
                 num_trains_per_train_loop=1000,
                 min_num_steps_before_training=10000,
                 vae_training_schedule=vae_schedules.custom_schedule_2,
                 oracle_data=False,
                 vae_save_period=50,
                 parallel_vae_train=False,
+                # This only gives us 3 episodes per evaluation. This can be fixed by changing
+                # num_train_loops_per_epoch, increasing eval, and going through goal idxs sequentially
             ),
             twin_sac_trainer_kwargs=dict(
                 discount=0.99,

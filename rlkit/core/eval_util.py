@@ -39,30 +39,33 @@ def get_generic_path_information(paths, stat_prefix=''):
                 ppp.list_of_dicts__to__dict_of_lists(p[info_key])
                 for p in paths
             ]
-            for k in all_env_infos[0].keys():
-                final_ks = np.array([info[k][-1] for info in all_env_infos])
-                first_ks = np.array([info[k][0] for info in all_env_infos])
-                all_ks = np.concatenate([info[k] for info in all_env_infos])
-                if not (final_ks == None).any():
-                    statistics.update(create_stats_ordered_dict(
-                        stat_prefix + k,
-                        final_ks,
-                        stat_prefix='{}/final/'.format(info_key),
-                    ))
+            
+            from functools import reduce
+            keys = list(reduce(lambda x, y: x | y, (map(lambda d: d.keys(), all_env_infos))))
+            for k in keys:
+                # final_ks = np.array([info[k][-1] for info in all_env_infos])
+                # first_ks = np.array([info[k][0] for info in all_env_infos])
+                final_ks = np.array([info[k][-1] if k in info else np.nan for info in all_env_infos])
+                first_ks = np.array([info[k][0] if k in info else np.nan for info in all_env_infos])
+                all_ks = np.concatenate([info.get(k, [np.nan]) for info in all_env_infos])
+                
+                statistics.update(create_stats_ordered_dict(
+                    stat_prefix + k,
+                    final_ks,
+                    stat_prefix='{}/final/'.format(info_key),
+                ))
 
-                if not (first_ks == None).any():
-                    statistics.update(create_stats_ordered_dict(
-                        stat_prefix + k,
-                        first_ks,
-                        stat_prefix='{}/initial/'.format(info_key),
-                    ))
+                statistics.update(create_stats_ordered_dict(
+                    stat_prefix + k,
+                    first_ks,
+                    stat_prefix='{}/initial/'.format(info_key),
+                ))
 
-                if not (all_ks == None).any():
-                    statistics.update(create_stats_ordered_dict(
-                        stat_prefix + k,
-                        all_ks,
-                        stat_prefix='{}/'.format(info_key),
-                    ))
+                statistics.update(create_stats_ordered_dict(
+                    stat_prefix + k,
+                    all_ks,
+                    stat_prefix='{}/'.format(info_key),
+                ))
 
     return statistics
 
@@ -110,10 +113,10 @@ def create_stats_ordered_dict(
         return OrderedDict({name: float(data)})
 
     stats = OrderedDict([
-        (name + ' Mean', np.mean(data)),
-        (name + ' Std', np.std(data)),
+        (name + ' Mean', np.nanmean(data)),
+        (name + ' Std', np.nanstd(data)),
     ])
     if not exclude_max_min:
-        stats[name + ' Max'] = np.max(data)
-        stats[name + ' Min'] = np.min(data)
+        stats[name + ' Max'] = np.nanmax(data)
+        stats[name + ' Min'] = np.nanmin(data)
     return stats

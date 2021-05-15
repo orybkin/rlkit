@@ -12,3 +12,4 @@ boto3
 torchvision==0.2.2
 mujoco_py
 git+https://github.com/vitchyr/multiworld.git@f711cdb
+pyquaternion

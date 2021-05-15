@@ -47,7 +47,7 @@ class SFMultiTaskDeepMindControl(MultiTaskDeepMindControl):
     self.recompute_reward = recompute_reward
     self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
     
-    super().__init__(wrapped_env, 2, (imsize, imsize))
+    super().__init__(wrapped_env, 2, (imsize, imsize), use_goal_idx=True)
     self._goal_set = False
 
   def set_to_goal(self, goal):
@@ -64,7 +64,7 @@ class SFMultiTaskDeepMindControl(MultiTaskDeepMindControl):
     return {'image': self.render_goal()}
 
   def reset(self):
-    self.goal_idx = random.randint(1, len(self.goals)) - 1
+    self.set_goal_idx(random.randint(1, len(self.get_goals())) - 1)
     return super().reset()
 
   def set_env_state(self, _):
@@ -100,6 +100,20 @@ class SFMultiTaskDeepMindControl(MultiTaskDeepMindControl):
     goals = rmap_list(np.stack, goals)
     return goals
 
+  def _update_obs(self, obs):
+    obs = super()._update_obs(obs)
+  
+    for i, goal in enumerate(self.goals):
+      d = self.compute_reward(i)[1]
+      for k, v in d.items():
+        d[k] = np.nan
+      obs.update(d)
+      
+    obs.update(self.compute_reward()[1])
+  
+    return obs
+  
+
 class SFMultiTaskMetaWorld(MultiTaskMetaWorld):
 
   def __init__(
@@ -123,7 +137,7 @@ class SFMultiTaskMetaWorld(MultiTaskMetaWorld):
     self.recompute_reward = recompute_reward
     self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
     
-    super().__init__(wrapped_env, 1)
+    super().__init__(wrapped_env, 1, use_goal_idx=True)
     self._width = imsize
     self._size = (self._width, self._width)
     self._goal_set = False
@@ -142,7 +156,7 @@ class SFMultiTaskMetaWorld(MultiTaskMetaWorld):
     return {'image': self.render_goal()}
   
   def reset(self):
-    self.goal_idx = random.randint(1, len(self.goals)) - 1
+    self.set_goal_idx(random.randint(1, len(self.get_goals())) - 1)
     return super().reset()
   
   def set_env_state(self, _):
@@ -164,8 +178,17 @@ class SFMultiTaskMetaWorld(MultiTaskMetaWorld):
       assert self._goal_set
       self._goal_set = False
       return self._skewfit_goal
-    
-    return super()._get_obs(state)
+  
+    obs = super()._get_obs(state)
+    for goal_idx in range(len(self._env.goals)):
+      obs['metric_reward/goal_' + str(goal_idx)] = np.nan
+      obs['metric_success/goal_' + str(goal_idx)] = np.nan
+      obs['metric_hand_distance/goal_' + str(goal_idx)] = np.nan
+      obs['metric_obj1_distance/goal_' + str(goal_idx)] = np.nan
+      obs['metric_obj2_distance/goal_' + str(goal_idx)] = np.nan
+      
+    obs = self._env.add_pertask_success(obs, self._env.goal_idx)
+    return obs
     
   def sample_goals(self, batch_size):
     if batch_size == 1:
@@ -221,7 +244,7 @@ class CollectDataset:
     if done:
       episode = {k: [t[k] for t in self._episode] for k in self._episode[0]}
       episode = {k: self._convert(v) for k, v in episode.items()}
-      episode['idx_repeated'] = np.ones(len(episode['reward']), dtype=np.int32)*self._env._env.goal_idx
+      episode['idx_repeated'] = np.ones(len(episode['reward']), dtype=np.int32)*self.get_goal_idx()
       for callback in self._callbacks:
         callback(episode)
     return obs, reward, done, info

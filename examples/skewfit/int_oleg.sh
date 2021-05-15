@@ -5,6 +5,9 @@ conda activate p2e_rlkit_py35
 export PYOPENGL_PLATFORM=egl
 export MUJOCO_RENDERER=egl
 export MUJOCO_GL=egl
+export GL_DEVICE_ID=$SLURM_STEP_GPUS
+#export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so:/usr/lib/x86_64-linux-gnu/libGL.so
+export LD_PRELOAD=
 #export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so
 cd /mnt/beegfs/home/oleh/code/p2e/rlkit_repo/examples/skewfit
 
@@ -20,3 +23,5 @@ cd /mnt/beegfs/home/oleh/code/p2e/rlkit_repo/examples/skewfit/
 conda deactivate
 conda activate p2e_rlkit_py35
 srun --gpus 1 --qos kostas-med --partition kostas-compute --time 24:00:00
+
+srun --gpus rtx2080ti:1 --qos kostas-high --partition kostas-compute --time 7-00:00:00 launcher_oleg.sh dmc_walker.py
