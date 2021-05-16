@@ -49,7 +49,7 @@ class SFMultiTaskKitchen(KitchenEnv):
     self.recompute_reward = recompute_reward
     self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
     
-    super().__init__(wrapped_env, 2, (imsize, imsize), use_goal_idx=True)
+    super().__init__(wrapped_env, action_repeat=2, width=imsize, use_goal_idx=True)
     self._goal_set = False
   
   def set_to_goal(self, goal):
@@ -77,7 +77,7 @@ class SFMultiTaskKitchen(KitchenEnv):
       self._goal_set = False
       return self._skewfit_goal['image']
     
-    return self.render_offscreen()
+    return self.render('rgb_array')
     # return self._env.sim.render(self._width, self._width)
   
   def compute_rewards(self, _, __):
@@ -90,13 +90,13 @@ class SFMultiTaskKitchen(KitchenEnv):
       return self._skewfit_goal
 
     obs = super()._get_obs(state)
-    for goal_idx in range(len(self._env.goals)):
+    for goal_idx in range(len(self.get_goals())):
       obs['metric_success_task_relevant/goal_'+str(goal_idx)] = np.nan
       obs['metric_success_all_objects/goal_'+str(goal_idx)]   = np.nan
 
-    task_rel_success, all_obj_success = self.compute_success(self._env.goal_idx)
-    obs['metric_success_task_relevant/goal_' + str(self._env.goal_idx)] = task_rel_success
-    obs['metric_success_all_objects/goal_' + str(self._env.goal_idx)] = all_obj_success
+    task_rel_success, all_obj_success = self.compute_success(self.goal_idx)
+    obs['metric_success_task_relevant/goal_' + str(self.goal_idx)] = task_rel_success
+    obs['metric_success_all_objects/goal_' + str(self.goal_idx)] = all_obj_success
     return obs
   
   def sample_goals(self, batch_size):

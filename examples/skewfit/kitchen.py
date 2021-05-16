@@ -5,7 +5,7 @@ import rlkit.torch.vae.vae_schedules as vae_schedules
 from rlkit.launchers.skewfit_experiments import skewfit_full_experiment
 from rlkit.torch.vae.conv_vae import imsize48_default_architecture
 import rlkit.torch.pytorch_util as ptu
-from rlkit.envs.metaworld_wrapper import SFMultiTaskMetaWorld, CollectDataset, save_episodes
+from rlkit.envs.metaworld_wrapper import SFMultiTaskKitchen, CollectDataset, save_episodes
 import multiworld.core.image_env
 
 if __name__ == "__main__":
@@ -18,8 +18,8 @@ if __name__ == "__main__":
         imsize=48,
         # init_camera=sawyer_init_camera_zoomed_in,
         # env_id='SawyerPushNIPSEasy-v0',
-        env_class = SFMultiTaskMetaWorld,
-        env_kwargs = dict(wrapped_env='sawyer_SawyerTwoBlockBinEnv_frontview3_boxedfront', imsize=48),
+        env_class = SFMultiTaskKitchen,
+        env_kwargs = dict(wrapped_env='d4rl_kitchen_topviewmicro', imsize=48),
         skewfit_variant=dict(
             env_collect_episodes=True,
             save_video=True,
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     n_seeds = 3
     mode = 'ec2'
-    exp_prefix = 'rlkit-skew-fit-mwpickblock'
+    exp_prefix = 'rlkit-skew-fit-kitchen'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):
