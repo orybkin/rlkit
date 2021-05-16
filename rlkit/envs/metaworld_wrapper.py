@@ -18,11 +18,97 @@ sys.path.append(str(pathlib.Path(__file__).parent.parent.parent.parent / 'dreame
 
 from environments import MultiTaskMetaWorld
 from envs.mt_dmc import MultiTaskDeepMindControl
+from envs.d4rl_envs import KitchenEnv
 # import rlkit.envs
 # from rlkit.envs.dreamer_environments import MultiTaskMetaWorld
 from collections import OrderedDict
 # from dreamerv2.environments import MultiTaskMetaWorld
 # import dreamerv2.wrappers
+
+
+
+class SFMultiTaskKitchen(KitchenEnv):
+  def __init__(
+      self,
+      wrapped_env,
+      imsize=84,
+      init_camera=None,
+      transpose=False,
+      grayscale=False,
+      normalize=False,
+      reward_type='wrapped_env',
+      threshold=10,
+      image_length=None,
+      presampled_goals=None,
+      non_presampled_goal_img_is_garbage=False,
+      recompute_reward=True
+  ):
+    self.transpose = transpose
+    self.grayscale = grayscale
+    self.normalize = normalize
+    self.recompute_reward = recompute_reward
+    self.non_presampled_goal_img_is_garbage = non_presampled_goal_img_is_garbage
+    
+    super().__init__(wrapped_env, 2, (imsize, imsize), use_goal_idx=True)
+    self._goal_set = False
+  
+  def set_to_goal(self, goal):
+    self._goal_set = True
+    self._skewfit_goal = goal
+  
+  def get_env_state(self):
+    return None
+  
+  def get_diagnostics(self, *args, **kwargs):
+    return OrderedDict()
+  
+  def get_goal(self):
+    return {'image': self.render_goal()}
+  
+  def reset(self):
+    self.set_goal_idx(random.randint(1, len(self.get_goals())) - 1)
+    return super().reset()
+  
+  def set_env_state(self, _):
+    pass
+  
+  def get_image(self, width, height):
+    if self._goal_set:
+      self._goal_set = False
+      return self._skewfit_goal['image']
+    
+    return self.render_offscreen()
+    # return self._env.sim.render(self._width, self._width)
+  
+  def compute_rewards(self, _, __):
+    return np.zeros((1))
+  
+  def _get_obs(self, state=None):
+    if state is None:
+      assert self._goal_set
+      self._goal_set = False
+      return self._skewfit_goal
+
+    obs = super()._get_obs(state)
+    for goal_idx in range(len(self._env.goals)):
+      obs['metric_success_task_relevant/goal_'+str(goal_idx)] = np.nan
+      obs['metric_success_all_objects/goal_'+str(goal_idx)]   = np.nan
+
+    task_rel_success, all_obj_success = self.compute_success(self._env.goal_idx)
+    obs['metric_success_task_relevant/goal_' + str(self._env.goal_idx)] = task_rel_success
+    obs['metric_success_all_objects/goal_' + str(self._env.goal_idx)] = all_obj_success
+    return obs
+  
+  def sample_goals(self, batch_size):
+    if batch_size == 1:
+      return rmap(lambda x: np.asarray(x)[None], {'image': self.render_goal()})
+    
+    import pdb;pdb.set_trace()
+    goals = []
+    for i in range(batch_size):
+      goals.append(self.render_goal())
+    goals = rmap_list(np.stack, goals)
+    return goals
 
 
 class SFMultiTaskDeepMindControl(MultiTaskDeepMindControl):
