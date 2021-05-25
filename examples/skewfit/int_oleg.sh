@@ -32,3 +32,45 @@ conda activate p2e_rlkit_py35
 srun --gpus 1 --qos kostas-med --partition kostas-compute --time 24:00:00
 
 srun --gpus rtx2080ti:1 --qos kostas-high --partition kostas-compute --time 7-00:00:00 launcher_oleg.sh dmc_walker.py
+
+
+
+# Machine setup
+
+# create environment.yml
+conda env create -f environment.yml
+conda deactivate
+conda deactivate
+conda activate p2e_rlkit_py35
+pip install git+https://github.com/vitchyr/multiworld.git@f711cdb
+pip install git+git://github.com/aravindr93/mjrl
+pip install gym==0.10.5 opencv-python scikit-video numba gpustat
+
+vim ~/.bashrc
+# add these lines:
+conda activate p2e_rlkit_py35
+cd goalexploration
+gpu() {
+  export CUDA_VISIBLE_DEVICES=$1
+}
+export PYOPENGL_PLATFORM=egl
+export MUJOCO_RENDERER=egl
+export MUJOCO_GL=egl
+
+git config --global credential.helper 'cache --timeout 86400'
+git clone https://github.com/orybkin/goalexploration.git
+git pull origin dev_oleg5
+git submodule init
+git submodule update
+# After conda installed
+python setup.py develop
+cd metaworld/
+python setup.py develop
+cd ../dreamerv2/envs/d4rl_repo/
+python setup.py develop
+cd ../rlkit_repo
+python setup.py develop
+
+cd ~/goalexploration/rlkit_repo/examples/skewfit/
+gpu 0
+python mw_pickblock.py
