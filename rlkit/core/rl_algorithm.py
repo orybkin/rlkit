@@ -75,6 +75,24 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
             snapshot['evaluation/' + k] = v
         for k, v in self.replay_buffer.get_snapshot().items():
             snapshot['replay_buffer/' + k] = v
+        
+        from blox.basic_types import map_dict
+        import numpy as np
+        size = self.replay_buffer._size
+        snapshot['replay_buffer/obs'] = map_dict(lambda x: x[:size], self.replay_buffer._obs)
+        snapshot['replay_buffer/next_obs'] =  map_dict(lambda x: x[:size], self.replay_buffer._next_obs)
+        snapshot['replay_buffer/actions'] = self.replay_buffer._actions[:size]
+        snapshot['replay_buffer/terminals'] = self.replay_buffer._terminals[:size]
+        snapshot['replay_buffer/rewards'] = np.zeros_like(self.replay_buffer._terminals[:size])
+        
+        # snapshot['exploration/env'] = self.replay_buffer._obs
+        # snapshot['evaluation/env'] = self.replay_buffer._obs
+        
+        # from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
+        # ObsDictRelabelingBuffer.add_path(self.replay_buffer, dict(observations=snapshot['replay_buffer/obs'], next_observations=snapshot['replay_buffer/next_obs'], actions=snapshot['replay_buffer/actions'], terminals=snapshot['replay_buffer/terminals'], rewards=snapshot['replay_buffer/rewards']))
+        # self.replay_buffer.add_path(dict(observations=snapshot['replay_buffer/obs'], next_observations=snapshot['replay_buffer/next_obs'], actions=snapshot['replay_buffer/actions'], terminals=snapshot['replay_buffer/terminals'], rewards=snapshot['replay_buffer/rewards']))
+        # logger.save_itr_params(0, snapshot)
+        
         return snapshot
 
     def _log_stats(self, epoch):
