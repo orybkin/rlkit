@@ -8,7 +8,14 @@ export MUJOCO_GL=egl
 export GL_DEVICE_ID=$SLURM_STEP_GPUS
 #export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so:/usr/lib/x86_64-linux-gnu/libGL.so
 export LD_PRELOAD=
-#export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so
+#export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so # using only this crashes bc of gl version
+#export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGL.so # using only this leads to black squares
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/
+# CRITICAL:absl:Shadow framebuffer is not complete, error 0x8cd7
+#CRITICAL:absl:Could not allocate display lists
+#CRITICAL:absl:Could not allocate display lists
+#CRITICAL:absl:Could not allocate display lists
+#CRITICAL:absl:Could not allocate font lists
 cd /mnt/beegfs/home/oleh/code/p2e/rlkit_repo/examples/skewfit
 
 #export PYOPENGL_PLATFORM=glfw
