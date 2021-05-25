@@ -518,6 +518,25 @@ def skewfit_experiment(variant):
         achieved_goal_key=achieved_goal_key,
         **variant['replay_buffer_kwargs']
     )
+
+    # TODO restore replay buffer
+    import torch
+    if 'checkpoint_path' in variant:
+        ckpt = torch.load(variant['checkpoint_path'])
+        vae.load_state_dict(ckpt['vae'].state_dict())
+        policy.load_state_dict(ckpt['trainer/policy'].state_dict())
+        qf1.load_state_dict(ckpt['trainer/qf1'].state_dict())
+        qf2.load_state_dict(ckpt['trainer/qf2'].state_dict())
+        target_qf1.load_state_dict(ckpt['trainer/target_qf1'].state_dict())
+        target_qf2.load_state_dict(ckpt['trainer/target_qf2'].state_dict())
+
+        from blox.basic_types import dictlist2listdict
+        from rlkit.data_management.obs_dict_replay_buffer import postprocess_obs_dict
+        buffer = dict(observations=ckpt['replay_buffer/obs'], next_observations=ckpt['replay_buffer/next_obs'], actions=ckpt['replay_buffer/actions'], terminals=ckpt['replay_buffer/terminals'],rewards=ckpt['replay_buffer/rewards'])
+        buffer['observations'] = dictlist2listdict(postprocess_obs_dict(buffer['observations']))
+        buffer['next_observations'] = dictlist2listdict(postprocess_obs_dict(buffer['next_observations']))
+        replay_buffer.add_path(buffer)
+    
     vae_trainer = ConvVAETrainer(
         variant['vae_train_data'],
         variant['vae_test_data'],
